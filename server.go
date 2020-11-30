@@ -36,19 +36,13 @@ type Server struct {
 	Files    map[string]*File
 	Handlers *http.ServeMux
 
-	log *logger
+	log        *logger
+	hasHandler map[string]bool
+	errhandler HTTPErrorHandler
 }
 
-type Handler struct {
-	// AXIS paths for resources assigned to this Handler. You may use other resources as well,
-	// but anything listed here will be marked off the list of files to serve statically.
-	Resources []string
-
-	// The handler logic. See also http.HandlerFunc.
-	Logic http.Handler
-
-	Path  string // The path this handler is responsible for.
-	Loose bool   // If true do no automatically insert a check for path supersets.
+type Handler interface {
+	initalize(fs *axis2.FileSystem, s *Server) error
 }
 
 type File struct {
@@ -76,7 +70,7 @@ type HTTPErrorHandler func(w http.ResponseWriter, r *http.Request, status int)
 // The Loggers are optional. If you provide one logger it will be used by everything. Two will be used for info and
 // errors. Only the first two will be used. You may pass nil for any Logger, in which case that kind of message will
 // not be logged.
-func Initialize(fs axis2.FileSystem, path string, handlers map[string]Handler, errhandler HTTPErrorHandler, log ...Logger) (error, *Server) {
+func Initialize(fs *axis2.FileSystem, path string, handlers map[string]Handler, errhandler HTTPErrorHandler, log ...Logger) (error, *Server) {
 	s := &Server{}
 
 	s.log = &logger{}
@@ -91,6 +85,8 @@ func Initialize(fs axis2.FileSystem, path string, handlers map[string]Handler, e
 		s.log.e = log[1]
 	}
 
+	s.errhandler = errhandler
+
 	// First build a tree of resources
 	s.log.InfoPrintln("Building data tree.")
 	err := loadDir(fs, path, s)
@@ -100,42 +96,18 @@ func Initialize(fs axis2.FileSystem, path string, handlers map[string]Handler, e
 	}
 
 	// Then mark off anything with an handler and set up the handlers.
-	s.log.InfoPrintln("Building handlers.")
-	hasHandler := map[string]bool{}
+	s.log.InfoPrintln("Initializing handlers.")
+	s.hasHandler = map[string]bool{}
 	s.Handlers = http.NewServeMux()
 	for _, h := range handlers {
-		s.log.ErrPrintln("Building handler for ", h.Path)
-		if hasHandler[h.Path] {
-			s.log.ErrPrintln("A handler for ", h.Path, " already exists.")
-			return errors.New("A handler for " + h.Path + " already exists."), nil
+		err := h.initalize(fs, s)
+		if err != nil {
+			s.log.ErrPrintln("Error: ", err, " while initializing handlers.")
+			return err, nil
 		}
-
-		for _, p := range h.Resources {
-			f, ok := s.Files[p]
-			if !ok {
-				s.log.ErrPrintln("Resource ", p, " does not exist.")
-				return errors.New("Resource " + p + " does not exist."), nil
-			}
-			f.Tags["Resource"] = true
-		}
-
-		hasHandler[h.Path] = true
-		if h.Loose {
-			s.Handlers.Handle(h.Path, h.Logic)
-		} else {
-			s.Handlers.HandleFunc(h.Path, func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != h.Path {
-					errhandler(w, r, http.StatusNotFound)
-					return
-				}
-
-				h.Logic.ServeHTTP(w, r)
-			})
-		}
-
 	}
 
-	if !hasHandler["/"] {
+	if !s.hasHandler["/"] {
 		s.Handlers.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			errhandler(w, r, http.StatusNotFound)
 		})
@@ -144,18 +116,18 @@ func Initialize(fs axis2.FileSystem, path string, handlers map[string]Handler, e
 	// Finally create handlers for the remaining stuff
 	for _, f := range s.Files {
 		s.log.ErrPrintln("Building handler for ", f.FullPath())
-		if hasHandler[f.FullPath()] {
+		if s.hasHandler[f.FullPath()] {
 			s.log.ErrPrintln("A handler for ", f.FullPath(), " already exists.")
 			return errors.New("A handler for " + f.FullPath() + " already exists."), nil
 		}
 
-		s.Handlers.HandleFunc(f.FullPath(), staticPageHandler(f, s, errhandler))
+		s.Handlers.HandleFunc(f.FullPath(), staticPageHandler(f, s))
 	}
 
 	return nil, s
 }
 
-func loadDir(fs axis2.FileSystem, path string, s *Server) error {
+func loadDir(fs *axis2.FileSystem, path string, s *Server) error {
 	dirpath := path
 	if path != "" {
 		path += "/"
