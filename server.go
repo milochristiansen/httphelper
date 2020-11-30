@@ -74,9 +74,9 @@ type HTTPErrorHandler func(w http.ResponseWriter, r *http.Request, status int)
 // If there is no handler for "/" one will automatically be created that simply calls the error handler with a 404.
 //
 // The Loggers are optional. If you provide one logger it will be used by everything. Two will be used for info and
-// errors. Three will be used for info, warnings, and errors. Only the first three will be used. You may pass nil for
-// any Logger, in which case that kind of message will not be logged.
-func Initialize(fs axis2.FileSystem, path string, handlers map[string]Handler, errhandler HTTPErrorHandler, log []Logger) (error, *Server) {
+// errors. Only the first two will be used. You may pass nil for any Logger, in which case that kind of message will
+// not be logged.
+func Initialize(fs axis2.FileSystem, path string, handlers map[string]Handler, errhandler HTTPErrorHandler, log ...Logger) (error, *Server) {
 	s := &Server{}
 
 	s.log = &logger{}
@@ -85,16 +85,10 @@ func Initialize(fs axis2.FileSystem, path string, handlers map[string]Handler, e
 		// Do nothing. RIP logging.
 	case 1:
 		s.log.i = log[0]
-		s.log.w = log[0]
 		s.log.e = log[0]
-	case 2:
-		s.log.i = log[0]
-		s.log.w = log[0]
-		s.log.e = log[1]
 	default:
 		s.log.i = log[0]
-		s.log.w = log[1]
-		s.log.e = log[2]
+		s.log.e = log[1]
 	}
 
 	// First build a tree of resources

@@ -30,18 +30,12 @@ type Logger interface {
 }
 
 type logger struct {
-	i, w, e Logger
+	i, e Logger
 }
 
 func (l *logger) InfoPrint(v ...interface{}) {
 	if l.i != nil {
 		l.i.Print(v...)
-	}
-}
-
-func (l *logger) WarnPrint(v ...interface{}) {
-	if l.w != nil {
-		l.w.Print(v...)
 	}
 }
 
@@ -57,12 +51,6 @@ func (l *logger) InfoPrintf(format string, v ...interface{}) {
 	}
 }
 
-func (l *logger) WarnPrintf(format string, v ...interface{}) {
-	if l.w != nil {
-		l.w.Printf(format, v...)
-	}
-}
-
 func (l *logger) ErrPrintf(format string, v ...interface{}) {
 	if l.e != nil {
 		l.e.Printf(format, v...)
@@ -72,12 +60,6 @@ func (l *logger) ErrPrintf(format string, v ...interface{}) {
 func (l *logger) InfoPrintln(v ...interface{}) {
 	if l.i != nil {
 		l.i.Println(v...)
-	}
-}
-
-func (l *logger) WarnPrintln(v ...interface{}) {
-	if l.w != nil {
-		l.w.Println(v...)
 	}
 }
 
