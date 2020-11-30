@@ -70,7 +70,7 @@ type HTTPErrorHandler func(w http.ResponseWriter, r *http.Request, status int)
 // The Loggers are optional. If you provide one logger it will be used by everything. Two will be used for info and
 // errors. Only the first two will be used. You may pass nil for any Logger, in which case that kind of message will
 // not be logged.
-func Initialize(fs *axis2.FileSystem, path string, handlers map[string]Handler, errhandler HTTPErrorHandler, log ...Logger) (error, *Server) {
+func Initialize(fs *axis2.FileSystem, path string, handlers []Handler, errhandler HTTPErrorHandler, log ...Logger) (error, *Server) {
 	s := &Server{}
 
 	s.log = &logger{}
