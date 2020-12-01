@@ -84,25 +84,31 @@ func Initialize(fs *axis2.FileSystem, path string, handlers []Handler, errhandle
 		s.log.i = log[0]
 		s.log.e = log[1]
 	}
+	if s.log.i == nil {
+		s.log.i = dummyLogger
+	}
+	if s.log.e == nil {
+		s.log.e = dummyLogger
+	}
 
 	s.errhandler = errhandler
 
 	// First build a tree of resources
-	s.log.InfoPrintln("Building data tree.")
+	s.log.i.Println("Building data tree.")
 	err := loadDir(fs, path, s)
 	if err != nil {
-		s.log.ErrPrintln("Error: ", err, " while building data tree.")
+		s.log.e.Println("Error: ", err, " while building data tree.")
 		return err, nil
 	}
 
 	// Then mark off anything with an handler and set up the handlers.
-	s.log.InfoPrintln("Initializing handlers.")
+	s.log.i.Println("Initializing handlers.")
 	s.hasHandler = map[string]bool{}
 	s.Handlers = http.NewServeMux()
 	for _, h := range handlers {
 		err := h.initalize(fs, s)
 		if err != nil {
-			s.log.ErrPrintln("Error: ", err, " while initializing handlers.")
+			s.log.e.Println("Error: ", err, " while initializing handlers.")
 			return err, nil
 		}
 	}
@@ -115,10 +121,12 @@ func Initialize(fs *axis2.FileSystem, path string, handlers []Handler, errhandle
 
 	// Finally create handlers for the remaining stuff
 	for _, f := range s.Files {
-		s.log.ErrPrintln("Building handler for ", f.FullPath())
+		p := strings.TrimPrefix(f.FullPath(), path)
+
+		s.log.e.Println("Building handler for ", p)
 		if s.hasHandler[f.FullPath()] {
-			s.log.ErrPrintln("A handler for ", f.FullPath(), " already exists.")
-			return errors.New("A handler for " + f.FullPath() + " already exists."), nil
+			s.log.e.Println("A handler for ", p, " already exists.")
+			return errors.New("A handler for " + p + " already exists."), nil
 		}
 
 		s.Handlers.HandleFunc(f.FullPath(), staticPageHandler(f, s))

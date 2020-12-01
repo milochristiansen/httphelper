@@ -22,6 +22,11 @@ misrepresented as being the original software.
 
 package httphelper
 
+import "log"
+import "io/ioutil"
+
+var dummyLogger = log.New(ioutil.Discard, "", 0)
+
 // Loggers passed into this package need to satisfy this interface.
 type Logger interface {
 	Print(v ...interface{})
@@ -31,40 +36,4 @@ type Logger interface {
 
 type logger struct {
 	i, e Logger
-}
-
-func (l *logger) InfoPrint(v ...interface{}) {
-	if l.i != nil {
-		l.i.Print(v...)
-	}
-}
-
-func (l *logger) ErrPrint(v ...interface{}) {
-	if l.e != nil {
-		l.e.Print(v...)
-	}
-}
-
-func (l *logger) InfoPrintf(format string, v ...interface{}) {
-	if l.i != nil {
-		l.i.Printf(format, v...)
-	}
-}
-
-func (l *logger) ErrPrintf(format string, v ...interface{}) {
-	if l.e != nil {
-		l.e.Printf(format, v...)
-	}
-}
-
-func (l *logger) InfoPrintln(v ...interface{}) {
-	if l.i != nil {
-		l.i.Println(v...)
-	}
-}
-
-func (l *logger) ErrPrintln(v ...interface{}) {
-	if l.e != nil {
-		l.e.Println(v...)
-	}
 }

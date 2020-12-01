@@ -64,10 +64,10 @@ func (h *SimpleHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 }
 
 func handlerBoilerplate(path string, resources []string, s *Server) error {
-	s.log.ErrPrintln("Building handler for ", path)
+	s.log.e.Println("Building handler for ", path)
 
 	if s.hasHandler[path] {
-		s.log.ErrPrintln("A handler for ", path, " already exists.")
+		s.log.e.Println("A handler for ", path, " already exists.")
 		return errors.New("A handler for " + path + " already exists.")
 	}
 	s.hasHandler[path] = true
@@ -75,7 +75,7 @@ func handlerBoilerplate(path string, resources []string, s *Server) error {
 	for _, p := range resources {
 		f, ok := s.Files[p]
 		if !ok {
-			s.log.ErrPrintln("Resource ", p, " does not exist.")
+			s.log.e.Println("Resource ", p, " does not exist.")
 			return errors.New("Resource " + p + " does not exist.")
 		}
 		f.Tags["Resource"] = true
@@ -96,7 +96,7 @@ func staticPageHandler(f *File, s *Server) func(w http.ResponseWriter, r *http.R
 		}
 		n, err := w.Write(f.Content) // This may error out, but we can't do anything about it (except maybe log it) at this point.
 		if err != nil {
-			s.log.ErrPrintln("Error in static page handler: ", err, " bytes written: ", n)
+			s.log.e.Println("Error in static page handler: ", err, " bytes written: ", n)
 		}
 	}
 }
@@ -129,13 +129,13 @@ func (h *TemplateHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 
 	content, err := fs.ReadAll(h.Path)
 	if err != nil {
-		s.log.ErrPrintln("Error in TemplateHandler ", h.name, ": ", err)
+		s.log.e.Println("Error in TemplateHandler ", h.name, ": ", err)
 		return err
 	}
 
 	h.page, err = template.New(h.name).Parse(string(content))
 	if err != nil {
-		s.log.ErrPrintln("Error in TemplateHandler ", h.name, ": ", err)
+		s.log.e.Println("Error in TemplateHandler ", h.name, ": ", err)
 		return err
 	}
 
@@ -151,7 +151,7 @@ func (h *TemplateHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 		}
 		err := h.page.Execute(w, d)
 		if err != nil {
-			s.log.ErrPrintln("Error in TemplateHandler ", h.name, ": ", err)
+			s.log.e.Println("Error in TemplateHandler ", h.name, ": ", err)
 		}
 	})
 
