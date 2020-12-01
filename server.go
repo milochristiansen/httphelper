@@ -122,6 +122,10 @@ func Initialize(fs *axis2.FileSystem, path string, handlers []Handler, errhandle
 
 	// Finally create handlers for the remaining stuff
 	for _, f := range s.Files {
+		if f.Tags["Resource"] {
+			continue
+		}
+
 		p := strings.TrimPrefix(f.FullPath(), path)
 
 		s.log.e.Println("Building handler for ", p)

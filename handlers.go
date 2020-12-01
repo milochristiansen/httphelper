@@ -125,15 +125,15 @@ func (h *TemplateHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 		return err
 	}
 
-	h.name = stripExt(filepath.Base(h.Path))
+	h.name = stripExt(filepath.Base(h.Template))
 
-	content, err := fs.ReadAll(h.Path)
-	if err != nil {
-		s.log.e.Println("Error in TemplateHandler ", h.name, ": ", err)
-		return err
+	f, ok := s.Files[h.Template]
+	if !ok {
+		s.log.e.Println("Error in TemplateHandler ", h.name, ": Resource ", h.Template, " does not exist.")
+		return errors.New("Resource " + h.Template + " does not exist.")
 	}
 
-	h.page, err = template.New(h.name).Parse(string(content))
+	h.page, err = template.New(h.name).Parse(string(f.Content))
 	if err != nil {
 		s.log.e.Println("Error in TemplateHandler ", h.name, ": ", err)
 		return err
