@@ -66,7 +66,7 @@ func (h *SimpleHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 }
 
 func handlerBoilerplate(path string, resources []string, s *Server) error {
-	s.log.e.Println("Building handler for ", path)
+	s.log.i.Println("Building handler for ", path)
 
 	if s.hasHandler[path] {
 		s.log.e.Println("A handler for ", path, " already exists.")
