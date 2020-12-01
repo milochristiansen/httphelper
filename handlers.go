@@ -30,6 +30,7 @@ import filepath "path"
 
 import "github.com/milochristiansen/axis2"
 
+// SimpleHandler is the handler type for binding a function or whatever to a path.
 type SimpleHandler struct {
 	// AXIS paths for resources assigned to this Handler. You may use other resources as well,
 	// but anything listed here will be marked off the list of files to serve statically.
@@ -101,6 +102,7 @@ func staticPageHandler(f *File, s *Server) func(w http.ResponseWriter, r *http.R
 	}
 }
 
+// TemplateHandler is the type for binding a template and data generator to a path.
 type TemplateHandler struct {
 	// AXIS paths for resources assigned to this Handler. You may use other resources as well,
 	// but anything listed here will be marked off the list of files to serve statically.
@@ -116,9 +118,6 @@ type TemplateHandler struct {
 	name string
 }
 
-// TemplateHandler returns a http.Handler backed by a template. If 'data' returns nil, then nothing is
-// done. It is assumed that you have already handled the error.
-// TODO: This is unworkable. Returning an error here is super ugly, and it is simply impossible to have a Server when this is needed.
 func (h *TemplateHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 	err := handlerBoilerplate(h.Path, h.Resources, s)
 	if err != nil {
