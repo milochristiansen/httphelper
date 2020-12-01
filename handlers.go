@@ -54,6 +54,7 @@ func (h *SimpleHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 	} else {
 		s.Handlers.HandleFunc(h.Path, func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path != h.Path {
+				s.log.i.Println("Rejecting request for ", r.URL.Path, " in handler for ", h.Path)
 				s.errhandler(w, r, http.StatusNotFound)
 				return
 			}
@@ -84,9 +85,10 @@ func handlerBoilerplate(path string, resources []string, s *Server) error {
 	return nil
 }
 
-func staticPageHandler(f *File, s *Server) func(w http.ResponseWriter, r *http.Request) {
+func staticPageHandler(f *File, s *Server, mountpoint string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != f.FullPath() {
+		if r.URL.Path != mountpoint {
+			s.log.i.Println("Rejecting request for ", r.URL.Path, " in handler for ", mountpoint)
 			s.errhandler(w, r, http.StatusNotFound)
 			return
 		}
@@ -140,6 +142,7 @@ func (h *TemplateHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 
 	s.Handlers.HandleFunc(h.Path, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != h.Path {
+			s.log.i.Println("Rejecting request for ", r.URL.Path, " in handler for ", h.Path)
 			s.errhandler(w, r, http.StatusNotFound)
 			return
 		}

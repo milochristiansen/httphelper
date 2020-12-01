@@ -120,6 +120,7 @@ func Initialize(fs *axis2.FileSystem, path string, handlers []Handler, errhandle
 
 	if !s.hasHandler["/"] {
 		s.Handlers.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			s.log.i.Println("Rejecting request for ", r.URL.Path, " in handler for /")
 			errhandler(w, r, http.StatusNotFound)
 		})
 	}
@@ -132,13 +133,13 @@ func Initialize(fs *axis2.FileSystem, path string, handlers []Handler, errhandle
 
 		p := strings.TrimPrefix(f.FullPath(), path)
 
-		s.log.e.Println("Building handler for ", p)
-		if s.hasHandler[f.FullPath()] {
+		s.log.i.Println("Building handler for ", p)
+		if s.hasHandler[p] {
 			s.log.e.Println("A handler for ", p, " already exists.")
 			return errors.New("A handler for " + p + " already exists."), nil
 		}
 
-		s.Handlers.HandleFunc(f.FullPath(), staticPageHandler(f, s))
+		s.Handlers.HandleFunc(p, staticPageHandler(f, s, p))
 	}
 
 	return nil, s
