@@ -94,6 +94,7 @@ func Initialize(fs *axis2.FileSystem, path string, handlers []Handler, errhandle
 	s.errhandler = errhandler
 
 	// First build a tree of resources
+	s.Files = map[string]*File{}
 	s.log.i.Println("Building data tree.")
 	err := loadDir(fs, path, s)
 	if err != nil {
