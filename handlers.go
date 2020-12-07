@@ -27,6 +27,7 @@ import "mime"
 import "errors"
 import "html/template"
 import filepath "path"
+import "encoding/json"
 
 import "github.com/milochristiansen/axis2"
 
@@ -157,5 +158,39 @@ func (h *TemplateHandler) initalize(fs *axis2.FileSystem, s *Server) error {
 		}
 	})
 
+	return nil
+}
+
+// JSONHandler is the handler type for binding a function or whatever to a path.
+type JSONHandler struct {
+	// AXIS paths for resources assigned to this Handler. You may use other resources as well,
+	// but anything listed here will be marked off the list of files to serve statically.
+	Resources []string
+
+	// Take a request, and return an object to marshal as JSON.
+	Data func(w http.ResponseWriter, r *http.Request) interface{}
+
+	Path string // The path this handler is responsible for.
+}
+
+func (h *JSONHandler) initalize(fs *axis2.FileSystem, s *Server) error {
+	err := handlerBoilerplate(h.Path, h.Resources, s)
+	if err != nil {
+		return err
+	}
+
+	s.Handlers.HandleFunc(h.Path, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != h.Path {
+			s.log.i.Println("Rejecting request for ", r.URL.Path, " in handler for ", h.Path)
+			s.errhandler(w, r, http.StatusNotFound)
+			return
+		}
+
+		data := h.Data(w, r)
+		err = json.NewEncoder(w).Encode(data)
+		if err != nil {
+			s.log.e.Println("Could not marshal data for JSON handler\n  ", err)
+		}
+	})
 	return nil
 }

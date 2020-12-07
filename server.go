@@ -42,7 +42,7 @@ type Server struct {
 	errhandler HTTPErrorHandler
 }
 
-// Handler is either a SimpleHandler or TemplateHandler
+// Handler is a SimpleHandler, TemplateHandler, or JSONHandler.
 type Handler interface {
 	initalize(fs *axis2.FileSystem, s *Server) error
 }
